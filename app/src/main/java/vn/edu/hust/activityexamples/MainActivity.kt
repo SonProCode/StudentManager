@@ -1,117 +1,114 @@
 package vn.edu.hust.activityexamples
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.ContextMenu
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView.AdapterContextMenuInfo
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.ImageView
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
 class MainActivity : AppCompatActivity() {
+
+  private val students = mutableListOf<Student>()
+  private lateinit var adapter: ArrayAdapter<Student>
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    findViewById<Button>(R.id.button_open).setOnClickListener {
-      val intent = Intent(this, SecondActivity::class.java)
-      intent.putExtra("param1", 1234)
-      intent.putExtra("param2", 3.14)
-      intent.putExtra("param3", "hello")
-      startActivity(intent)
+    val listView: ListView = findViewById(R.id.listView)
+
+
+    adapter = object : ArrayAdapter<Student>(this, R.layout.student_item, students) {
+      override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup): View {
+        val view = convertView ?: layoutInflater.inflate(R.layout.student_item, parent, false)
+
+        val student = students[position]
+
+        val studentNameView: TextView = view.findViewById(R.id.student_full_name)
+        val studentMSSVView: TextView = view.findViewById(R.id.student_mssv)
+
+        studentNameView.text = "Sinh viên: ${student.name}"
+        studentMSSVView.text = "MSSV: ${student.mssv}"
+
+        return view
+      }
     }
 
-    val textResult = findViewById<TextView>(R.id.text_result)
-    val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult(),
-      { it: ActivityResult ->
-        if (it.resultCode == RESULT_OK) {
-          val hoten = it.data?.getStringExtra("hoten")
-          val mssv = it.data?.getStringExtra("mssv")
-          textResult.text = "$hoten\n$mssv"
-        } else {
-          textResult.text = "CANCELLED"
-        }
-      })
-
-    findViewById<Button>(R.id.button_add_student).setOnClickListener {
-      val intent = Intent(this, AddStudentActivity::class.java)
-      launcher.launch(intent)
-    }
-
-    findViewById<Button>(R.id.button_open_other).setOnClickListener {
-      //val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:098654321"))
-      //val intent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=Back+Khoa"))
-//      val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://hust.edu.vn"))
-
-      val intent = Intent(Intent.ACTION_SEND)
-      intent.type = "text/plain"
-      intent.putExtra(Intent.EXTRA_EMAIL, arrayOf("test1@gmail.com", "test2@gmail.com"))
-      intent.putExtra(Intent.EXTRA_SUBJECT, "Email title")
-      intent.putExtra(Intent.EXTRA_TEXT, "Email content")
-
-      startActivity(intent)
-    }
-
-//    supportActionBar?.title = "Hello Android"
-//    supportActionBar?.setDisplayShowHomeEnabled(true)
-//    supportActionBar?.setIcon(R.mipmap.ic_launcher)
-//    supportActionBar?.setBackgroundDrawable(resources.getDrawable(R.drawable.gradient_background, null))
-
-//    val imageView = findViewById<ImageView>(R.id.imageView)
-//    registerForContextMenu(imageView)
-
-    val items = mutableListOf<String>()
-    for (i in 1..20)
-      items.add("Item $i")
-    val listView = findViewById<ListView>(R.id.listView)
-    listView.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items)
+    listView.adapter = adapter
 
     registerForContextMenu(listView)
+
+    students.add(Student("Trần Hoàng Sơn", "20210744"))
+    students.add(Student("Nguyễn Minh Tú", "20210745"))
+    adapter.notifyDataSetChanged()
   }
 
-  override fun onCreateContextMenu(
-    menu: ContextMenu?,
-    v: View?,
-    menuInfo: ContextMenu.ContextMenuInfo?
-  ) {
-    menuInflater.inflate(R.menu.main_menu, menu)
+  override fun onCreateContextMenu(menu: ContextMenu?, v: View?, menuInfo: ContextMenu.ContextMenuInfo?) {
     super.onCreateContextMenu(menu, v, menuInfo)
+    menuInflater.inflate(R.menu.context_menu, menu)
   }
 
   override fun onContextItemSelected(item: MenuItem): Boolean {
-    val pos = (item.menuInfo as AdapterContextMenuInfo).position
+    val info = item.menuInfo as AdapterView.AdapterContextMenuInfo
+    val selectedStudent = students[info.position]
+
     when (item.itemId) {
-      R.id.action_share -> {Toast.makeText(this, "Share $pos", Toast.LENGTH_LONG).show()}
-      R.id.action_download -> {Toast.makeText(this, "Download $pos", Toast.LENGTH_LONG).show()}
-      R.id.action_settings -> {Toast.makeText(this, "Settings $pos", Toast.LENGTH_LONG).show()}
+      R.id.edit -> {
+
+        val intent = Intent(this, EditStudentActivity::class.java)
+        intent.putExtra("name", selectedStudent.name)
+        intent.putExtra("mssv", selectedStudent.mssv)
+        intent.putExtra("position", info.position)
+        startActivityForResult(intent, 1)
+      }
+      R.id.remove -> {
+        students.removeAt(info.position)
+        adapter.notifyDataSetChanged()
+        Toast.makeText(this, "Sinh viên đã bị xóa", Toast.LENGTH_SHORT).show()
+      }
     }
     return super.onContextItemSelected(item)
   }
 
   override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-    menuInflater.inflate(R.menu.main_menu, menu)
+    menuInflater.inflate(R.menu.menu_main, menu)
     return super.onCreateOptionsMenu(menu)
   }
 
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
     when (item.itemId) {
-      R.id.action_share -> {Toast.makeText(this, "Share", Toast.LENGTH_LONG).show()}
-      R.id.action_download -> {Toast.makeText(this, "Download", Toast.LENGTH_LONG).show()}
-      R.id.action_settings -> {Toast.makeText(this, "Settings", Toast.LENGTH_LONG).show()}
+      R.id.menu_add_new -> {
+        val intent = Intent(this, AddStudentActivity::class.java)
+        startActivityForResult(intent, 2)
+      }
     }
     return super.onOptionsItemSelected(item)
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    if (resultCode == RESULT_OK) {
+      val name = data?.getStringExtra("name") ?: ""
+      val mssv = data?.getStringExtra("mssv") ?: ""
+
+      if (requestCode == 1) {
+        val position = data?.getIntExtra("position", -1) ?: -1
+        if (position != -1) {
+          students[position] = Student(name, mssv)
+          adapter.notifyDataSetChanged()
+        }
+      } else if (requestCode == 2) {
+        students.add(Student(name, mssv))
+        adapter.notifyDataSetChanged()
+      }
+    }
   }
 }

@@ -1,35 +1,28 @@
 package vn.edu.hust.activityexamples
 
 import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 
-class AddStudentActivity : AppCompatActivity() {
+class AddStudentActivity : Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_add_student)
 
-    val editHoten = findViewById<EditText>(R.id.edit_hoten)
-    val editMssv = findViewById<EditText>(R.id.edit_mssv)
+    val nameEditText: EditText = findViewById(R.id.nameEditText)
+    val mssvEditText: EditText = findViewById(R.id.mssvEditText)
+    val addButton: Button = findViewById(R.id.addButton)
 
-    findViewById<Button>(R.id.button_ok).setOnClickListener {
-      val hoten = editHoten.text.toString()
-      val mssv = editMssv.text.toString()
+    addButton.setOnClickListener {
+      val name = nameEditText.text.toString()
+      val mssv = mssvEditText.text.toString()
 
-      intent.putExtra("hoten", hoten)
-      intent.putExtra("mssv", mssv)
-
-      setResult(Activity.RESULT_OK, intent)
-      finish()
-    }
-
-    findViewById<Button>(R.id.button_cancel).setOnClickListener {
-      setResult(Activity.RESULT_CANCELED)
+      val resultIntent = Intent()
+      resultIntent.putExtra("name", name)
+      resultIntent.putExtra("mssv", mssv)
+      setResult(RESULT_OK, resultIntent)
       finish()
     }
   }
